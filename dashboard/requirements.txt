@@ -6,4 +6,4 @@ plotly>=5.18.0
 pyvis>=0.3.2
 python-dotenv>=1.0.0
 PyYAML>=6.0.0
-web3>=6.0.0
+# Балансы: JSON-RPC через requests (lib/rpc.py), web3 не требуется

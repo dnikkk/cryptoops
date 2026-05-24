@@ -1,42 +1,16 @@
 from __future__ import annotations
 
-import os
 from typing import Any
 
 import pandas as pd
 from dotenv import load_dotenv
-from web3 import Web3
 
 from lib.config import ENV_FILE, EXPLORER_BASE, NO_PRICE
 from lib.etherscan import fetch_account_action
 from lib.prices import fetch_symbol_prices_usd, format_usd, price_for_symbol, value_usd
-from lib.wallets import address_labels
+from lib.rpc import erc20_balance_of, eth_get_balance, is_rpc_available, rpc_url
 
 load_dotenv(ENV_FILE)
-
-ERC20_BALANCE_ABI = [
-    {
-        "constant": True,
-        "inputs": [{"name": "account", "type": "address"}],
-        "name": "balanceOf",
-        "outputs": [{"name": "", "type": "uint256"}],
-        "type": "function",
-    },
-    {
-        "constant": True,
-        "inputs": [],
-        "name": "decimals",
-        "outputs": [{"name": "", "type": "uint8"}],
-        "type": "function",
-    },
-    {
-        "constant": True,
-        "inputs": [],
-        "name": "symbol",
-        "outputs": [{"name": "", "type": "string"}],
-        "type": "function",
-    },
-]
 
 DISPLAY_COLUMNS = [
     "symbol",
@@ -53,6 +27,14 @@ def _norm(addr: str) -> str:
     return addr.lower()
 
 
+def _checksum(addr: str) -> str:
+    """0x-prefixed address for RPC (Etherscan checksum not required on Sepolia RPC)."""
+    a = addr.strip()
+    if not a.startswith("0x"):
+        a = "0x" + a
+    return a
+
+
 def _human(raw: int, decimals: int) -> tuple[str, float]:
     if decimals <= 0:
         v = float(raw)
@@ -61,19 +43,6 @@ def _human(raw: int, decimals: int) -> tuple[str, float]:
         v = raw / (10**decimals)
         s = f"{v:.8f}".rstrip("0").rstrip(".") or "0"
     return s, v
-
-
-def _w3() -> Web3 | None:
-    rpc = os.getenv("SEPOLIA_RPC_URL", "").strip()
-    if not rpc:
-        return None
-    try:
-        w3 = Web3(Web3.HTTPProvider(rpc, request_kwargs={"timeout": 30}))
-        if w3.is_connected():
-            return w3
-    except Exception:
-        pass
-    return None
 
 
 def discover_tokens_from_tokentx(address: str) -> dict[str, dict[str, Any]]:
@@ -116,54 +85,60 @@ def _row(
 
 
 def fetch_balances_dataframe(address: str) -> pd.DataFrame:
-    w3 = _w3()
+    addr = _checksum(address)
+    rpc_ok = is_rpc_available()
+    if not rpc_ok and not rpc_url():
+        raise RuntimeError(
+            "SEPOLIA_RPC_URL не задан в cryptoops/.env — нужен для чтения балансов."
+        )
+
     tokens = discover_tokens_from_tokentx(address)
     rows: list[dict[str, Any]] = []
     market_prices = fetch_symbol_prices_usd()
 
-    if w3:
-        eth_wei = w3.eth.get_balance(Web3.to_checksum_address(address))
-        bal_str, bal_num = _human(eth_wei, 18)
-        rows.append(
-            _row(
-                symbol="ETH",
-                balance_str=bal_str,
-                balance_num=bal_num,
-                contract="—",
-                decimals=18,
-                etherscan=f"{EXPLORER_BASE}/address/{address}",
-                price=price_for_symbol("ETH", market_prices),
+    if rpc_ok:
+        try:
+            eth_wei = eth_get_balance(addr)
+            bal_str, bal_num = _human(eth_wei, 18)
+            rows.append(
+                _row(
+                    symbol="ETH",
+                    balance_str=bal_str,
+                    balance_num=bal_num,
+                    contract="—",
+                    decimals=18,
+                    etherscan=f"{EXPLORER_BASE}/address/{address}",
+                    price=price_for_symbol("ETH", market_prices),
+                )
             )
-        )
+        except Exception as exc:
+            rows.append(
+                {
+                    "symbol": "ETH",
+                    "balance": f"ошибка RPC: {exc}",
+                    "price_usd": NO_PRICE,
+                    "value_usd": NO_PRICE,
+                    "contract": "—",
+                    "decimals": 18,
+                    "etherscan": f"{EXPLORER_BASE}/address/{address}",
+                    "_value_usd_num": None,
+                }
+            )
 
     for _contract, meta in tokens.items():
         balance_str = "0"
         balance_num = 0.0
-        if w3:
+        if rpc_ok:
             try:
-                c = w3.eth.contract(
-                    address=Web3.to_checksum_address(meta["contract"]),
-                    abi=ERC20_BALANCE_ABI,
-                )
-                raw = c.functions.balanceOf(
-                    Web3.to_checksum_address(address)
-                ).call()
-                dec = meta["decimals"]
-                try:
-                    dec = c.functions.decimals().call()
-                except Exception:
-                    pass
-                sym = meta["symbol"]
-                try:
-                    sym = c.functions.symbol().call()
-                except Exception:
-                    pass
+                raw = erc20_balance_of(_checksum(meta["contract"]), addr)
+                dec = int(meta["decimals"])
                 balance_str, balance_num = _human(raw, dec)
-                meta["symbol"] = sym
-                meta["decimals"] = dec
             except Exception:
                 balance_str = "—"
                 balance_num = 0.0
+        else:
+            balance_str = "— (нет RPC)"
+
         sym = str(meta["symbol"])
         token_price = price_for_symbol(sym, market_prices)
         rows.append(
@@ -193,11 +168,11 @@ def fetch_balances_dataframe(address: str) -> pd.DataFrame:
             ]
         )
 
-    priced = [r["_value_usd_num"] for r in rows if r["_value_usd_num"] is not None]
+    priced = [r["_value_usd_num"] for r in rows if r.get("_value_usd_num") is not None]
     total_num = sum(priced) if priced else None
 
     for r in rows:
-        del r["_value_usd_num"]
+        r.pop("_value_usd_num", None)
 
     total_row = {
         "symbol": "TOTAL",

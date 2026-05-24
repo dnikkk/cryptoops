@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <script
+    type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"
+  ></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #0d1526;
+      overflow: hidden;
+      font-family: "DM Sans", "Segoe UI", Arial, sans-serif;
+    }
+    #network {
+      width: 100%;
+      border: 1px solid rgba(99, 179, 237, 0.18);
+      border-radius: 12px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div id="network"></div>
+  <script>
+    /* Minimal Streamlit component bridge (no external lib). */
+    const Streamlit = {
+      API_VERSION: 1,
+      RENDER_EVENT: "streamlit:render",
+      events: new EventTarget(),
+      registeredMessageListener: false,
+      lastFrameHeight: 0,
+      setComponentReady() {
+        if (!this.registeredMessageListener) {
+          window.addEventListener("message", (e) => this.onMessageEvent(e));
+          this.registeredMessageListener = true;
+        }
+        this.sendBackMsg("streamlit:componentReady", { apiVersion: this.API_VERSION });
+      },
+      setFrameHeight(height) {
+        if (height === undefined) height = document.body.scrollHeight;
+        if (height === this.lastFrameHeight) return;
+        this.lastFrameHeight = height;
+        this.sendBackMsg("streamlit:setFrameHeight", { height });
+      },
+      setComponentValue(value) {
+        this.sendBackMsg("streamlit:setComponentValue", {
+          value,
+          dataType: "json",
+        });
+      },
+      sendBackMsg(type, data) {
+        window.parent.postMessage(
+          Object.assign({ isStreamlitMessage: true, type }, data),
+          "*"
+        );
+      },
+      onMessageEvent(event) {
+        if (event.data && event.data.type === this.RENDER_EVENT) {
+          const args = event.data.args || {};
+          const detail = {
+            disabled: Boolean(event.data.disabled),
+            args,
+            theme: event.data.theme,
+          };
+          this.events.dispatchEvent(
+            new CustomEvent(this.RENDER_EVENT, { detail })
+          );
+        }
+      },
+    };
+
+    const COLORS = {
+      safe: { bg: "#3d7ea6", border: "#7ec8ff", font: "#f5f8ff" },
+      eoa: { bg: "#2a7a55", border: "#6ee7a8", font: "#f0fff6" },
+      external: { bg: "#5a6478", border: "#a8b4c8", font: "#eef2f8" },
+      focus: "#ffe082",
+      edge: {
+        internal: "#6ee7a8",
+        external: "#ffb86c",
+        safe_exec: "#79c0ff",
+        signer: "#8b95a8",
+        selected: "#ffe082",
+      },
+      labelBg: "#162238",
+      labelFg: "#eef3fb",
+    };
+
+    let network = null;
+    let fixedScale = null;
+
+    function edgeStyle(kind, selected) {
+      if (selected) return { color: COLORS.edge.selected, width: 4, dashes: false };
+      if (kind === "signer") return { color: COLORS.edge.signer, width: 2, dashes: [8, 6] };
+      if (kind === "safe_exec") return { color: COLORS.edge.safe_exec, width: 3, dashes: false };
+      if (kind === "external") return { color: COLORS.edge.external, width: 3, dashes: false };
+      return { color: COLORS.edge.internal, width: 3, dashes: false };
+    }
+
+    function nodeStyle(role, focused) {
+      const c = COLORS[role] || COLORS.external;
+      const shape = role === "safe" ? "box" : role === "eoa" ? "ellipse" : "dot";
+      const size = focused ? 48 : role === "external" ? 34 : 40;
+      return {
+        color: { background: c.bg, border: focused ? COLORS.focus : c.border, highlight: c.border },
+        shape,
+        size,
+        font: { color: c.font, size: focused ? 20 : 18, face: "DM Sans, Segoe UI, Arial" },
+        borderWidth: focused ? 3 : 2,
+      };
+    }
+
+    function labelVadjust(y, anchorY) {
+      return y < anchorY - 20 ? -36 : 36;
+    }
+
+    function buildNetwork(args) {
+      const container = document.getElementById("network");
+      const height = args.height || 920;
+      container.style.height = height + "px";
+      container.onwheel = function (e) {
+        e.preventDefault();
+      };
+
+      const anchorY = args.anchorY || 0;
+      const visNodes = new vis.DataSet(
+        (args.nodes || []).map((n) => {
+          const st = nodeStyle(n.role, !!n.focused);
+          const vadj = labelVadjust(n.y || 0, anchorY);
+          return {
+            id: n.id,
+            label: n.label,
+            title: n.title || n.label,
+            x: n.x,
+            y: n.y,
+            fixed: { x: true, y: true },
+            ...st,
+            font: { ...st.font, vadjust: vadj, align: "center" },
+          };
+        })
+      );
+
+      const visEdges = new vis.DataSet(
+        (args.edges || []).map((e) => {
+          const st = edgeStyle(e.kind, !!e.selected);
+          const curve = e.curve || "curvedCW";
+          const roundness = e.roundness || 0.35;
+          return {
+            id: e.id,
+            from: e.from,
+            to: e.to,
+            title: e.title,
+            label: e.label || "",
+            font: {
+              size: e.labelSize || 12,
+              color: COLORS.labelFg,
+              background: COLORS.labelBg,
+              strokeWidth: 3,
+              strokeColor: "#0d1526",
+              align: "horizontal",
+              face: "JetBrains Mono, Consolas, monospace",
+            },
+            smooth: { enabled: true, type: curve, roundness },
+            arrows: { to: { enabled: true, scaleFactor: 0.65 } },
+            ...st,
+          };
+        })
+      );
+
+      const options = {
+        physics: { enabled: false },
+        interaction: {
+          hover: true,
+          tooltipDelay: 80,
+          zoomView: false,
+          dragView: true,
+          dragNodes: false,
+          selectConnectedEdges: false,
+        },
+        layout: { improvedLayout: false },
+      };
+
+      if (network) network.destroy();
+      network = new vis.Network(container, { nodes: visNodes, edges: visEdges }, options);
+
+      network.once("afterDrawing", function () {
+        const ids = visNodes.getIds();
+        if (!ids.length) return;
+        network.fit({ nodes: ids, animation: false });
+        const bb = network.getBoundingBox(ids);
+        const cw = container.clientWidth || 800;
+        const gw = Math.max(bb.right - bb.left, 1);
+        fixedScale = Math.min((cw * 0.92) / gw, 1.35);
+        const cx = (bb.left + bb.right) / 2;
+        const cy = (bb.top + bb.bottom) / 2;
+        network.moveTo({ scale: fixedScale, position: { x: cx, y: cy }, animation: false });
+      });
+
+      network.on("zoom", function (p) {
+        if (fixedScale && Math.abs(p.scale - fixedScale) > 0.001) {
+          network.moveTo({ scale: fixedScale, animation: false });
+        }
+      });
+
+      network.on("click", function (params) {
+        if (params.edges && params.edges.length > 0) {
+          Streamlit.setComponentValue(params.edges[0]);
+        }
+      });
+
+      const sel = args.selectedEdgeId;
+      if (sel) {
+        network.selectEdges([sel]);
+        const edge = visEdges.get(sel);
+        if (edge && edge.from) {
+          network.focus(edge.from, { scale: fixedScale || 1, animation: false });
+        }
+      }
+
+      Streamlit.setFrameHeight(height + 8);
+    }
+
+    function onRender(event) {
+      buildNetwork(event.detail.args || {});
+    }
+
+    Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, onRender);
+    Streamlit.setComponentReady();
+    Streamlit.setFrameHeight(920);
+  </script>
+</body>
+</html>

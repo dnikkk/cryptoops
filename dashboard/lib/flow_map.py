@@ -1,7 +1,8 @@
-"""On-chain flows between registry wallets (8 nodes)."""
+"""On-chain flows: registry wallets + external counterparties."""
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any
@@ -11,7 +12,11 @@ from lib.wallets import all_wallet_entries, address_labels, load_wallets
 
 
 def _norm(addr: str) -> str:
-    return addr.lower()
+    return (addr or "").lower()
+
+
+def _short_addr(addr: str) -> str:
+    return f"{addr[:6]}…{addr[-4:]}"
 
 
 @dataclass
@@ -27,7 +32,7 @@ class FlowLeg:
 class FlowEdge:
     source: str
     target: str
-    edge_kind: str  # transfer | safe_exec | signer
+    edge_kind: str  # transfer | safe_exec | signer | external
     legs: list[FlowLeg] = field(default_factory=list)
 
     @property
@@ -48,15 +53,18 @@ class FlowEdge:
     @property
     def title(self) -> str:
         lines = [f"{self.edge_kind}: {self.label}"]
-        for leg in self.legs[:5]:
+        for leg in self.legs[:8]:
             lines.append(f"  {leg.tx_hash[:10]}… {leg.amount} {leg.asset}")
-        if len(self.legs) > 5:
-            lines.append(f"  … +{len(self.legs) - 5} tx")
+        if len(self.legs) > 8:
+            lines.append(f"  … +{len(self.legs) - 8} tx")
         return "\n".join(lines)
 
     @property
     def primary_tx(self) -> str:
         return self.legs[0].tx_hash if self.legs else ""
+
+    def involves_registry(self, registry: set[str]) -> bool:
+        return self.source in registry or self.target in registry
 
 
 def registry_addresses() -> set[str]:
@@ -68,7 +76,6 @@ def safe_addresses() -> set[str]:
 
 
 def signer_topology_edges() -> list[FlowEdge]:
-    """Static Safe → signer links (not from tx)."""
     edges: list[FlowEdge] = []
     data = load_wallets()
     for safe in data.get("safes", []):
@@ -105,6 +112,22 @@ def _human_token(raw: str, decimals: int) -> str:
     return s or "0"
 
 
+def _edge_kind_for_eth(
+    *,
+    source: str,
+    target: str,
+    registry: set[str],
+    safes: set[str],
+    function_name: str,
+) -> str:
+    fn = (function_name or "").lower()
+    if "exec" in fn and target in safes and source in registry:
+        return "safe_exec"
+    if source in registry and target in registry:
+        return "transfer"
+    return "external"
+
+
 def _add_leg(
     bucket: dict[tuple[str, str, str], FlowEdge],
     *,
@@ -121,10 +144,7 @@ def _add_leg(
             edge_kind=kind,
             legs=[],
         )
-    # dedupe by tx_hash + asset + amount
-    exists = {
-        (l.tx_hash, l.asset, l.amount) for l in bucket[key].legs
-    }
+    exists = {(l.tx_hash, l.asset, l.amount) for l in bucket[key].legs}
     if (leg.tx_hash, leg.asset, leg.amount) not in exists:
         bucket[key].legs.append(leg)
 
@@ -144,12 +164,19 @@ def _collect_onchain_edges_cached(refresh: bool = False) -> tuple[FlowEdge, ...]
         for t in raw.get("txlist", []):
             f = _norm(t.get("from", ""))
             to = _norm(t.get("to") or "")
-            if f not in reg or to not in reg or f == to:
+            if not f or not to or f == to:
+                continue
+            if f not in reg and to not in reg:
                 continue
             h = (t.get("hash") or "").lower()
             val = int(t.get("value") or 0)
-            fn = (t.get("functionName") or "").lower()
-            kind = "safe_exec" if "exec" in fn and to in safes else "transfer"
+            kind = _edge_kind_for_eth(
+                source=f,
+                target=to,
+                registry=reg,
+                safes=safes,
+                function_name=t.get("functionName") or "",
+            )
             _add_leg(
                 bucket,
                 source=f,
@@ -167,16 +194,19 @@ def _collect_onchain_edges_cached(refresh: bool = False) -> tuple[FlowEdge, ...]
         for t in raw.get("tokentx", []):
             f = _norm(t.get("from", ""))
             to = _norm(t.get("to") or "")
-            if f not in reg or to not in reg or f == to:
+            if not f or not to or f == to:
+                continue
+            if f not in reg and to not in reg:
                 continue
             h = (t.get("hash") or "").lower()
             sym = t.get("tokenSymbol") or "?"
             dec = int(t.get("tokenDecimal") or 18)
+            kind = "transfer" if f in reg and to in reg else "external"
             _add_leg(
                 bucket,
                 source=f,
                 target=to,
-                kind="transfer",
+                kind=kind,
                 leg=FlowLeg(
                     tx_hash=h,
                     asset=sym,
@@ -191,10 +221,14 @@ def _collect_onchain_edges_cached(refresh: bool = False) -> tuple[FlowEdge, ...]
 
 def all_flow_edges(
     *,
-    include_signer_links: bool = True,
+    include_signer_links: bool = False,
+    include_external: bool = True,
     refresh: bool = False,
 ) -> list[FlowEdge]:
     edges = list(_collect_onchain_edges_cached(refresh))
+    if not include_external:
+        reg = registry_addresses()
+        edges = [e for e in edges if e.source in reg and e.target in reg]
     if include_signer_links:
         edges.extend(signer_topology_edges())
     return edges
@@ -204,13 +238,25 @@ def edges_for_wallet(
     wallet: str,
     edges: list[FlowEdge] | None = None,
     *,
-    include_signer_links: bool = True,
+    include_signer_links: bool = False,
+    include_external: bool = True,
 ) -> list[FlowEdge]:
     w = _norm(wallet)
     pool = edges if edges is not None else all_flow_edges(
-        include_signer_links=include_signer_links
+        include_signer_links=include_signer_links,
+        include_external=include_external,
     )
     return [e for e in pool if e.source == w or e.target == w]
+
+
+def node_role(addr: str, registry: set[str] | None = None) -> str:
+    reg = registry or registry_addresses()
+    a = _norm(addr)
+    if a in safe_addresses():
+        return "safe"
+    if a in reg:
+        return "eoa"
+    return "external"
 
 
 def nodes_for_edges(
@@ -219,19 +265,88 @@ def nodes_for_edges(
     focus: str | None = None,
 ) -> list[dict[str, Any]]:
     labels = address_labels()
+    registry = registry_addresses()
     addrs: set[str] = set()
     for e in edges:
         addrs.add(e.source)
         addrs.add(e.target)
+
     nodes: list[dict[str, Any]] = []
     for addr in sorted(addrs):
-        role = "safe" if addr in safe_addresses() else "eoa"
+        role = node_role(addr, registry)
+        if role == "external":
+            label = _short_addr(addr)
+        else:
+            label = labels.get(addr, _short_addr(addr))
         nodes.append(
             {
                 "id": addr,
-                "label": labels.get(addr, f"{addr[:6]}…{addr[-4:]}"),
+                "label": label,
                 "role": role,
                 "focused": focus is not None and _norm(focus) == addr,
             }
         )
     return nodes
+
+
+def registry_layout_positions(
+    *,
+    spread: float = 1.0,
+) -> dict[str, tuple[int, int]]:
+    data = load_wallets()
+    positions: dict[str, tuple[int, int]] = {}
+    cluster_gap = int(980 * spread)
+    signer_dx = int(400 * spread)
+    row_gap = int(230 * spread)
+
+    for cluster_idx, safe in enumerate(data.get("safes", [])):
+        base_x = cluster_idx * cluster_gap
+        s_addr = _norm(safe["address"])
+        positions[s_addr] = (base_x, 0)
+        signers = safe.get("signers", [])
+        n = len(signers)
+        for i, signer in enumerate(signers):
+            y = int((i - (n - 1) / 2) * row_gap)
+            positions[_norm(signer["address"])] = (base_x + signer_dx, y)
+
+    return positions
+
+
+def layout_positions_for_nodes(
+    nodes: list[dict[str, Any]],
+    *,
+    focus: str | None = None,
+) -> dict[str, tuple[int, int]]:
+    """Registry fixed LR; external nodes on the right arc around focus wallet."""
+    reg_layout = registry_layout_positions()
+    layout: dict[str, tuple[int, int]] = {}
+    externals: list[str] = []
+
+    for n in nodes:
+        nid = n["id"]
+        if n["role"] == "external":
+            externals.append(nid)
+        elif nid in reg_layout:
+            layout[nid] = reg_layout[nid]
+
+    if not externals:
+        return layout
+
+    focus_id = _norm(focus or "")
+    anchor = layout.get(focus_id)
+    if anchor is None:
+        xs = [p[0] for p in layout.values()] or [0]
+        ys = [p[1] for p in layout.values()] or [0]
+        anchor = (max(xs) + 420, sum(ys) / max(len(ys), 1))
+
+    ax, ay = anchor
+    n_ext = len(externals)
+    radius = 380 + min(n_ext, 30) * 8
+    for i, ext in enumerate(sorted(externals)):
+        angle = -math.pi / 2 + (2 * math.pi * i / max(n_ext, 1))
+        layout[ext] = (
+            int(ax + radius * math.cos(angle)),
+            int(ay + radius * 0.55 * math.sin(angle)),
+        )
+
+    return layout
