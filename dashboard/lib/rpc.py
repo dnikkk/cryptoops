@@ -2,27 +2,25 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
 import requests
-from dotenv import load_dotenv
 
-from lib.config import ENV_FILE
-
-load_dotenv(ENV_FILE)
+from lib.env_config import get_setting, require_setting
 
 _BALANCE_OF = "0x70a08231"  # balanceOf(address)
 
 
 def rpc_url() -> str:
-    return os.getenv("SEPOLIA_RPC_URL", "").strip()
+    return get_setting("SEPOLIA_RPC_URL")
 
 
 def _call(method: str, params: list[Any]) -> Any:
     url = rpc_url()
     if not url:
-        raise RuntimeError("SEPOLIA_RPC_URL не задан в cryptoops/.env")
+        raise RuntimeError(
+            "SEPOLIA_RPC_URL не задан (.env или Streamlit Secrets → Settings)."
+        )
     resp = requests.post(
         url,
         json={"jsonrpc": "2.0", "id": 1, "method": method, "params": params},

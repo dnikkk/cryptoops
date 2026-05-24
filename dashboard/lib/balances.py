@@ -89,7 +89,7 @@ def fetch_balances_dataframe(address: str) -> pd.DataFrame:
     rpc_ok = is_rpc_available()
     if not rpc_ok and not rpc_url():
         raise RuntimeError(
-            "SEPOLIA_RPC_URL не задан в cryptoops/.env — нужен для чтения балансов."
+            "SEPOLIA_RPC_URL не задан (.env или Streamlit Secrets)."
         )
 
     tokens = discover_tokens_from_tokentx(address)

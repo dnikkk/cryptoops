@@ -25,7 +25,9 @@ with st.spinner("Чтение балансов и курса ETH…"):
         df = fetch_balances_dataframe(wallet)
     except Exception as e:
         st.error(f"Не удалось загрузить балансы: {e}")
-        st.info("Проверьте `SEPOLIA_RPC_URL` в cryptoops/.env")
+        st.info(
+            "Проверьте `SEPOLIA_RPC_URL` в `.env` или Streamlit Secrets (Settings)."
+        )
         st.stop()
 
 total_row = df[df["symbol"] == "TOTAL"]

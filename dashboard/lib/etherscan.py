@@ -6,12 +6,9 @@ from pathlib import Path
 from typing import Any
 
 import requests
-from dotenv import load_dotenv
-import os
 
-from lib.config import CACHE_DIR, CHAIN_ID, ENV_FILE, ETHERSCAN_API
-
-load_dotenv(ENV_FILE)
+from lib.config import CACHE_DIR, CHAIN_ID, ETHERSCAN_API
+from lib.env_config import require_setting
 
 RATE_LIMIT_SLEEP = 0.25
 
@@ -21,12 +18,10 @@ def _norm(addr: str) -> str:
 
 
 def api_key() -> str:
-    key = os.getenv("ETHERSCAN_API_KEY", "").strip()
-    if not key:
-        raise ValueError(
-            "ETHERSCAN_API_KEY не найден в cryptoops/.env — нужен для загрузки транзакций."
-        )
-    return key
+    return require_setting(
+        "ETHERSCAN_API_KEY",
+        hint="Нужен для загрузки транзакций с Etherscan.",
+    )
 
 
 def _cache_path(address: str, action: str) -> Path:
