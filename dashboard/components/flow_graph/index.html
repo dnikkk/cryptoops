@@ -102,18 +102,18 @@
     function nodeStyle(role, focused) {
       const c = COLORS[role] || COLORS.external;
       const shape = role === "safe" ? "box" : role === "eoa" ? "ellipse" : "dot";
-      const size = focused ? 48 : role === "external" ? 34 : 40;
+      const size = focused ? 56 : role === "external" ? 42 : 48;
       return {
         color: { background: c.bg, border: focused ? COLORS.focus : c.border, highlight: c.border },
         shape,
         size,
-        font: { color: c.font, size: focused ? 20 : 18, face: "DM Sans, Segoe UI, Arial" },
+        font: { color: c.font, size: focused ? 26 : role === "external" ? 20 : 24, face: "DM Sans, Segoe UI, Arial" },
         borderWidth: focused ? 3 : 2,
       };
     }
 
     function labelVadjust(y, anchorY) {
-      return y < anchorY - 20 ? -36 : 36;
+      return y < anchorY - 20 ? -44 : 44;
     }
 
     function buildNetwork(args) {
@@ -154,13 +154,13 @@
             title: e.title,
             label: e.label || "",
             font: {
-              size: e.labelSize || 12,
+              size: e.labelSize || 20,
               color: COLORS.labelFg,
               background: COLORS.labelBg,
-              strokeWidth: 3,
+              strokeWidth: 6,
               strokeColor: "#0d1526",
               align: "horizontal",
-              face: "JetBrains Mono, Consolas, monospace",
+              face: "DM Sans, Segoe UI, Arial, sans-serif",
             },
             smooth: { enabled: true, type: curve, roundness },
             arrows: { to: { enabled: true, scaleFactor: 0.65 } },
@@ -192,7 +192,7 @@
         const bb = network.getBoundingBox(ids);
         const cw = container.clientWidth || 800;
         const gw = Math.max(bb.right - bb.left, 1);
-        fixedScale = Math.min((cw * 0.92) / gw, 1.35);
+        fixedScale = Math.min((cw * 0.88) / gw, 1.55);
         const cx = (bb.left + bb.right) / 2;
         const cy = (bb.top + bb.bottom) / 2;
         network.moveTo({ scale: fixedScale, position: { x: cx, y: cy }, animation: false });

@@ -16,16 +16,16 @@ _flow_graph_component = components.declare_component(
 
 
 def _edge_label_parts(edge: FlowEdge) -> tuple[str, int]:
-    """Label text and font size (amounts/tokens smaller)."""
+    """Label text and font size on edge."""
     if edge.edge_kind == "signer" or not edge.legs:
-        return "", 12
+        return "", 20
     if len(edge.legs) > 1:
-        return f"{len(edge.legs)} tx", 13
+        return f"{len(edge.legs)} tx", 22
     leg = edge.legs[0]
     text = f"{leg.amount} {leg.asset}"
     if len(text) > 22:
         text = f"{text[:19]}…"
-    return text, 11
+    return text, 20
 
 
 def _serialize_edges(
