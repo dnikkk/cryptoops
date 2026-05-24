@@ -1,0 +1,33 @@
+{
+  "campaignId": "eftihia-sepolia-001",
+  "network": "sepolia",
+  "merkleRoot": "0xfde04f44bdb5e29ce3a74c3be1543223794d94e61805805e00d432d4030015b2",
+  "claims": {
+    "0x6886654b5745eabb1517ef9d8556c5b3dc86646f": {
+      "address": "0x6886654B5745EAbB1517eF9D8556c5b3dc86646f",
+      "amount": "1800000000000",
+      "leafIndex": 0,
+      "proof": [
+        "0x1abc206e4eacdb63933560c720fe64fcfe166ed1ac7f0e99949082b4779c7237",
+        "0xcfadfbdc1f61ba0a60ce955b9c7dea2f9bce3bdcd0a5ebd66644ed088cd326b0"
+      ]
+    },
+    "0x898effdb03ba6623640cf9e8be39de7ad78c6680": {
+      "address": "0x898EfFDB03Ba6623640cF9E8BE39de7ad78c6680",
+      "amount": "1800000000000",
+      "leafIndex": 1,
+      "proof": [
+        "0x6163b19ccce499a879d09c5bff74f1a3d5b7083a795097b1959ff81dda8c63f6",
+        "0xcfadfbdc1f61ba0a60ce955b9c7dea2f9bce3bdcd0a5ebd66644ed088cd326b0"
+      ]
+    },
+    "0xf3364d8e63a051d6ee5c20b95757468a10b2a97b": {
+      "address": "0xF3364d8E63a051D6Ee5C20B95757468a10b2a97B",
+      "amount": "1800000000000",
+      "leafIndex": 2,
+      "proof": [
+        "0x3a2265ef27aae842ffc9378829bd83f8731e3575a04aeb239c3060339dbf082d"
+      ]
+    }
+  }
+}

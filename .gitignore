@@ -1,0 +1,21 @@
+# Node
+node_modules/
+
+# Python
+.venv/
+
+# Foundry
+out/
+cache/
+broadcast/
+
+# Secrets
+.env
+.env.local
+.streamlit/secrets.toml
+
+# Dashboard cache (Etherscan API responses)
+dashboard/cache/
+
+# Merkle clone (optional: track separately)
+# merkle-tree/node_modules/

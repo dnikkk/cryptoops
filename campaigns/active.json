@@ -1,0 +1,4 @@
+{
+  "campaignId": "eftihia-sepolia-001",
+  "note": "Default campaign for npm run build-tree / get-proof. Override with $env:CAMPAIGN_ID=\"eftihia-sepolia-002\""
+}

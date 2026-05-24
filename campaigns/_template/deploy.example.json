@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "campaignId": "CHANGE-ME-round-002",
+  "description": "Fill after deploy on Sepolia",
+  "network": {
+    "name": "sepolia",
+    "chainId": 11155111,
+    "explorer": "https://sepolia.etherscan.io"
+  },
+  "token": {
+    "name": "Eftihia",
+    "symbol": "EFTIHIA",
+    "decimals": 6,
+    "contract": "0x0000000000000000000000000000000000000000",
+    "deployTx": null
+  },
+  "merkleClaim": {
+    "contract": "0x0000000000000000000000000000000000000000",
+    "deployTx": null,
+    "merkleRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "fundedAmountRaw": "0",
+    "fundedAmountHuman": "0",
+    "fundTx": null,
+    "verifiedOnEtherscan": false,
+    "etherscanVerifyGuid": null
+  },
+  "deployer": {
+    "address": "0x0000000000000000000000000000000000000000",
+    "role": "deployer"
+  },
+  "offChainArtifacts": {
+    "whitelistCsv": "whitelist.csv",
+    "merkleTreeDump": "output/tree.json",
+    "proofs": "output/proof.json"
+  },
+  "deployBlock": null,
+  "recipients": [],
+  "links": {
+    "tokenEtherscan": null,
+    "claimEtherscan": null,
+    "claimWrite": null
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "cryptoops-airdrop",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sepolia Merkle airdrop learning scripts",
+  "scripts": {
+    "build-tree": "node scripts/build-tree.mjs",
+    "get-proof": "node scripts/get-proof.mjs"
+  },
+  "dependencies": {
+    "@openzeppelin/merkle-tree": "file:./merkle-tree"
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0",
+  "campaignId": "eftemonia-sepolia-002",
+  "description": "Eftemonia Merkle airdrop on Sepolia — deployed and all claims completed",
+  "network": {
+    "name": "sepolia",
+    "chainId": 11155111,
+    "explorer": "https://sepolia.etherscan.io"
+  },
+  "token": {
+    "name": "Eftemonia",
+    "symbol": "EFTEMONIA",
+    "decimals": 8,
+    "contract": "0xD8F12d08DF8752c7CD1d372D1Ae17BE44AD8f05D",
+    "deployTx": "0xf572e9d1a3e0825ba7b2d13dbaac447fae618b61fe761a51d094d0405813edb7",
+    "deployTxUrl": "https://sepolia.etherscan.io/tx/0xf572e9d1a3e0825ba7b2d13dbaac447fae618b61fe761a51d094d0405813edb7"
+  },
+  "merkleClaim": {
+    "contract": "0x876360751b9AC12Cb688b1Fa2f21f43D453BAb52",
+    "deployTx": "0x03143470990f7b895fb5a6ab113613329d9d93e1cfa7185722403f420c1439f1",
+    "deployTxUrl": "https://sepolia.etherscan.io/tx/0x03143470990f7b895fb5a6ab113613329d9d93e1cfa7185722403f420c1439f1",
+    "merkleRoot": "0xfa7336e60b0e9376ec62a579beaec2171cb29f4e716a275a13e4649286a30bc6",
+    "fundedAmountRaw": "18000000000",
+    "fundedAmountHuman": "180",
+    "fundTx": "0x3cf73d4d440204a8b3373375d1263f32b31c984c070129ec9f6caf3d926716b1",
+    "fundTxUrl": "https://sepolia.etherscan.io/tx/0x3cf73d4d440204a8b3373375d1263f32b31c984c070129ec9f6caf3d926716b1",
+    "verifiedOnEtherscan": true,
+    "etherscanVerifyGuid": null
+  },
+  "deployer": {
+    "address": "0x6886654B5745EAbB1517eF9D8556c5b3dc86646f",
+    "role": "deployer + minter + whitelist entry 0"
+  },
+  "offChainArtifacts": {
+    "whitelistCsv": "whitelist.csv",
+    "merkleTreeDump": "output/tree.json",
+    "proofs": "output/proof.json"
+  },
+  "deployBlock": 10905648,
+  "recipients": [
+    {
+      "index": 0,
+      "address": "0x6886654B5745EAbB1517eF9D8556c5b3dc86646f",
+      "amountRaw": "6000000000",
+      "amountHuman": "60",
+      "claimed": true,
+      "claimMethod": "cast",
+      "claimTx": "0xc2bad7ad7e2c70c37fd53835a781f613e43cec45f1e3f33883fce9b725dba5ad",
+      "claimTxUrl": "https://sepolia.etherscan.io/tx/0xc2bad7ad7e2c70c37fd53835a781f613e43cec45f1e3f33883fce9b725dba5ad",
+      "claimBlock": 10905660
+    },
+    {
+      "index": 1,
+      "address": "0x898EfFDB03Ba6623640cF9E8BE39de7ad78c6680",
+      "amountRaw": "6000000000",
+      "amountHuman": "60",
+      "claimed": true,
+      "claimMethod": "etherscan+rabby",
+      "claimTx": "0x977ebf9cddc084b11636ae6475a34b01775b72fff5ba9173a6055f3d95b54b91",
+      "claimTxUrl": "https://sepolia.etherscan.io/tx/0x977ebf9cddc084b11636ae6475a34b01775b72fff5ba9173a6055f3d95b54b91",
+      "claimBlock": 10905764
+    },
+    {
+      "index": 2,
+      "address": "0xF3364d8E63a051D6Ee5C20B95757468a10b2a97B",
+      "amountRaw": "6000000000",
+      "amountHuman": "60",
+      "claimed": true,
+      "claimMethod": "etherscan+rabby",
+      "claimTx": "0xafb5ba8093e008a4e26e938d1063924a901bf90c5835e0ad401eae9c1680d41e",
+      "claimTxUrl": "https://sepolia.etherscan.io/tx/0xafb5ba8093e008a4e26e938d1063924a901bf90c5835e0ad401eae9c1680d41e",
+      "claimBlock": 10905772
+    }
+  ],
+  "links": {
+    "tokenEtherscan": "https://sepolia.etherscan.io/address/0xD8F12d08DF8752c7CD1d372D1Ae17BE44AD8f05D",
+    "claimEtherscan": "https://sepolia.etherscan.io/address/0x876360751b9AC12Cb688b1Fa2f21f43D453BAb52",
+    "claimWrite": "https://sepolia.etherscan.io/address/0x876360751b9AC12Cb688b1Fa2f21f43D453BAb52#writeContract"
+  }
+}

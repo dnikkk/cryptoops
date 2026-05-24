@@ -1,0 +1,38 @@
+---
+description: CryptoOps Merkle airdrop — core conventions for the agent
+alwaysApply: true
+---
+
+# CryptoOps — agent rules
+
+## Docs map (read before acting)
+
+- Playbook: `README.md` § Playbook
+- Campaign folders: `campaigns/README.md` (no README inside `campaigns/<id>/`)
+- Merkle Node: `scripts/README.md` — folder `scripts/`
+- Deploy Foundry: `script/README.md` — folder `script/` (not `scripts/`)
+- Completed runs: `RUNBOOK.md`
+
+## Architecture
+
+- No standalone ERC20 deploy: always `TestToken` + `MerkleClaim(merkleRoot)` + `mint(claim, FUND)` in one `forge script --broadcast`.
+- Off-chain: `npm run build-tree` / `get-proof` → `campaigns/<id>/output/`.
+- `forge build` / `forge test` = local only; **on-chain deploy** = `forge script ... --broadcast` only.
+- `forge` does not read `tree.json`; copy `merkleRoot` and fund sum into `script/Deploy*.s.sol` manually.
+
+## Security
+
+- Never commit `.env` or paste `PRIVATE_KEY` into chat.
+- Do not create `README.md` under `campaigns/<id>/` — use `deploy.json` + row in `campaigns/README.md`.
+
+## Windows
+
+- Project root: `cryptoops/`
+- PowerShell: `$env:CAMPAIGN_ID = "<id>"` before npm Merkle commands
+- Foundry: `$env:Path += ";$env:USERPROFILE\.foundry\bin"`
+
+## Safe vs EOA (claim)
+
+- EOA: claim via Rabby + Etherscan Write or `cast`; `msg.sender` = whitelist address.
+- Safe: claim only via **Safe App** Transaction Builder; `msg.sender` = Safe address.
+- Single-leaf tree → `proof = []`.

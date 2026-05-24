@@ -1,0 +1,13 @@
+{
+  "campaignId": "eftihia-safe-sepolia-003",
+  "network": "sepolia",
+  "merkleRoot": "0x1520ae2b53f0f0581064f98e481f524369efddfadaf7a7fd6310f943a2391408",
+  "claims": {
+    "0x435a0e13ca88b467c3371e78418faeab5721a8d1": {
+      "address": "0x435A0e13cA88b467C3371E78418fAeaB5721a8d1",
+      "amount": "5400000000000",
+      "leafIndex": 0,
+      "proof": []
+    }
+  }
+}
