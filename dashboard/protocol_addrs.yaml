@@ -1,0 +1,6 @@
+# Populated automatically from on-chain tx discovery (dashboard/lib/classifier.py)
+# Known Sepolia DeFi routers — extended when seen in user transactions.
+uniswap_v3_router: "0x3bFA4769FB09eefC5a295ffd9EBD9b41D54b2c74"
+uniswap_universal_router: "0x3A9D48AB9751398BbFa63ad67599Bb04e4BdF98b"
+uniswap_router_sep_user: "0x9008d19f58aabd9ed0"
+aave_pool_sepolia: "0x6Ae43d3271ff6888fc7F2dd8E2Cf9A8296fef2b8"

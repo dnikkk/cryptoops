@@ -1,0 +1,26 @@
+network: sepolia
+chain_id: 11155111
+explorer: https://sepolia.etherscan.io
+
+chrome_profiles:
+  profile_a_safe1:
+    label: "Chrome A / Rabby A + Safe #1"
+  profile_b_safe2:
+    label: "Chrome B / Rabby B + Safe #2"
+
+safes:
+  - label: "Safe #1"
+    address: "0x435A0e13cA88b467C3371E78418fAeaB5721a8d1"
+    chrome_profile: profile_a_safe1
+    signers:
+      - { label: "Rabby-A #1", address: "0x898EfFDB03Ba6623640cF9E8BE39de7ad78c6680" }
+      - { label: "Rabby-A #2", address: "0x6886654B5745EAbB1517eF9D8556c5b3dc86646f", dds_note: "Deployer" }
+      - { label: "Rabby-A #3", address: "0xF3364d8E63a051D6Ee5C20B95757468a10b2a97B" }
+
+  - label: "Safe #2"
+    address: "0x03E400726D7744f255a160c51De83A035435dEff"
+    chrome_profile: profile_b_safe2
+    signers:
+      - { label: "Rabby-B #1", address: "0xFEa86eb2A7A5bf99CA1C2C2e81490A7ef13D164e" }
+      - { label: "Rabby-B #2", address: "0x1bb2961B8d2E490Bd61F89CE87eb9072d5c85730" }
+      - { label: "Rabby-B #3", address: "0x2B232f0B685F7cC8701fDF6987CC6D3769B164FA" }

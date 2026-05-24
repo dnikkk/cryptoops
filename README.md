@@ -23,6 +23,7 @@
 | Foundry setup | [`FOUNDRY.md`](FOUNDRY.md) | Установка `forge`/`cast`, `foundry.toml`, RPC |
 | Runbook (завершённые кампании) | [`RUNBOOK.md`](RUNBOOK.md) | 001–004: EOA claim, Safe claim, deploy-справка |
 | Cursor (агент) | [`.cursor/README.md`](.cursor/README.md) | правила + `/new-campaign` и др. slash-команды |
+| **DDS Dashboard** | [`dashboard/README.md`](dashboard/README.md) | Streamlit ДДС / балансы Sepolia (`streamlit run app.py`) |
 
 > **Не путать:** `scripts/` (Node, Merkle на диске) и `script/` (Solidity, on-chain деплой).
 
