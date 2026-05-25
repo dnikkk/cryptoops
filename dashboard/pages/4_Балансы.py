@@ -16,7 +16,7 @@ from lib.styles import apply_theme, hero
 st.set_page_config(page_title="Балансы", page_icon="◇", layout="wide")
 apply_theme()
 
-hero("Балансы", "Текущие токены на адресе · Sepolia · оценка в USD")
+hero("Балансы", "Текущие балансы по адресу · Sepolia · оценка в USD")
 
 wallet = render_wallet_sidebar_tree()
 
@@ -48,6 +48,7 @@ st.dataframe(
 )
 
 st.caption(
-    "USD: CoinGecko (ETH, WETH, DAI, USDC, …). Учебные токены кампаний (EFTIHIA, EFTEMONIA) — **—**."
+    "Оценка в USD: CoinGecko (ETH, WETH, DAI, USDC, …). "
+    "Для учебных токенов кампаний (EFTIHIA, EFTEMONIA) значение не рассчитывается."
 )
-st.info("Снимок остатков, не ДДС. Движения — на странице «ДДС».")
+st.info("На странице представлен снимок текущих остатков. История движений доступна в «ДДС».")

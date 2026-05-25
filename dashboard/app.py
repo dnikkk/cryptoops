@@ -31,44 +31,39 @@ render_wallet_sidebar_tree()
 
 hero(
     "CryptoOps Treasury",
-    "Операционный дашборд ДДС на Sepolia — Merkle airdrop, Safe, Rabby EOA",
+    "Операционный дашборд ДДС для Sepolia: Merkle airdrop, Safe, Rabby EOA",
 )
 
 st.markdown(
     """
 ### Что это
 
-**CryptoOps** — учебный контур Merkle airdrop на **Sepolia testnet** (chainId `11155111`):
-whitelist → Merkle tree (off-chain) → деплой `TestToken` + `MerkleClaim` → claim получателями.
+**CryptoOps** — монитор **Etherscan (Sepolia)** для учета проведенных сделок и on-chain операций
+по выбранным кошелькам.
 
-Этот дашборд отвечает на вопрос: **куда и откуда двинулись средства** по выбранному адресу
-(EOA или Gnosis Safe), без опоры на UI Rabby / Safe App / Aave / Uniswap.
+Для сценария **Claim** были подготовлены 4 airdrop: 2 для кошельков **Rabby** и 2 для
+кошельков **Safe**. Затем были выполнены операции claim этих токенов и операции **LP**
+через мультсиг.
 
-### EOA vs Safe
-
-| Режим | Что попадает в ДДС |
-|-------|---------------------|
-| **EOA** (Rabby) | Исходящие tx: `tx.from` = адрес EOA (claim 001/002, swap с сайта) |
-| **Safe** | Операции **кошелька Safe**: `execTransaction` **на** Safe + исходящие ERC20, где `from` = Safe |
-
-**Почему так:** в Etherscan у Safe в поле `from` часто виден **подписант** (EOA), а не адрес Safe.
-Claim 003/004 и DeFi через Safe App всё равно относятся к Safe — дашборд собирает их по этим правилам.
-
-**Подписанты в sidebar** — те же Rabby-адреса; кнопка подписанта показывает **личные** tx EOA
-(`tx.from` = Rabby), а зелёная кнопка Safe — **операции Safe** (другой срез).
+Приложение также отслеживает все типы операций, которые отображаются во вкладках
+страницы **ДДС**.
 
 ### Источники данных
 
-- **Etherscan API v2** (`ETHERSCAN_API_KEY` в `cryptoops/.env`) — tx, internal, ERC20, NFT
-- **Сиды** — `campaigns/*/deploy.json` (claim/deploy tx для классификатора)
-- **RPC** (`SEPOLIA_RPC_URL`) — балансы на стр. «Балансы»
-- Локальный кэш: `dashboard/cache/{address}/`
+**Источник данных для ДДС** — **Etherscan API v2** (`ETHERSCAN_API_KEY` в `cryptoops/.env`):
+история on-chain операций, internal tx, ERC20 и NFT по выбранным адресам на Sepolia.
 
-Рыночные цены testnet-токенов **не доступны** — в колонках USD/EUR/ETH/BTC стоит **—**.
+**Для работы приложения дополнительно используются:**
+
+- Локальный кэш: `dashboard/cache/{address}/`
+- `campaigns/*/deploy.json` — служебные данные из репозитория для классификатора claim / deploy
+- **RPC** (`SEPOLIA_RPC_URL`) — текущие балансы на странице «Балансы»
+
+Рыночные цены testnet-токенов **недоступны** — в колонках USD/EUR/ETH/BTC отображается **—**.
 
 ### Навигация
 
-Используйте боковое меню Streamlit:
+Разделы приложения:
 
 1. **О проекте** — этот экран  
 2. **ДДС** — движения по кошельку (вкладки + плоская таблица, `row_level`)  

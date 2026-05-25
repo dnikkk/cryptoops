@@ -72,7 +72,7 @@ def render_flow_graph(
 ) -> str | None:
     """
     Render graph; return clicked edge_id (or None).
-    Scale is fixed from container width; zoom disabled.
+    Initial scale fits container width; zoom is controlled by vertical scroll.
     """
     layout = layout_positions_for_nodes(nodes, focus=focus_wallet)
     ys = [layout[n["id"]][1] for n in nodes if n["id"] in layout]

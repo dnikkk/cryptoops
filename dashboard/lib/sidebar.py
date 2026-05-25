@@ -101,13 +101,14 @@ def render_wallet_sidebar_tree() -> str:
         "Обновить кэш Etherscan",
         value=False,
         key="dds_refresh_toggle",
-        help="По умолчанию данные из локального кэша (быстрее, меньше запросов API). "
-        "Включите после новой tx в Sepolia, если её нет в таблице.",
+        help="По умолчанию используются данные локального кэша "
+        "(быстрее и с меньшим количеством запросов API). "
+        "Включите после новой транзакции в Sepolia, если она отсутствует в таблице.",
     )
     if st.session_state.refresh_data:
-        st.sidebar.caption("Следующая загрузка ДДС подтянет свежие данные с Etherscan.")
+        st.sidebar.caption("Следующая загрузка ДДС получит актуальные данные из Etherscan.")
     else:
-        st.sidebar.caption("Используется локальный кэш · авто-обновление ~5 мин на вкладке ДДС.")
+        st.sidebar.caption("Используется локальный кэш · автоматическое обновление ~5 мин на вкладке ДДС.")
 
     addr = st.session_state.wallet_address
     role = wallet_role(addr)

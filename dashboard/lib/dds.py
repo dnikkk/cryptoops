@@ -106,11 +106,11 @@ def _compute_data_warning(
 ) -> str:
     if safe_noop:
         return (
-            "✗ Safe reject/no-op — средств нет "
-            "(в UI: отмена; в chain: success, пустой calldata)"
+            "✗ Safe reject / no-op — движение средств отсутствует "
+            "(в интерфейсе: отмена; в сети: success, пустой calldata)"
         )
     if not child_rows:
-        return "⚠ нет детализированных ног"
+        return "⚠ отсутствуют детализирующие строки"
     has_out = any(r.get("direction") == "Out" for r in child_rows)
     has_in = any(r.get("direction") == "In" for r in child_rows)
     if cow_order and not any(
@@ -118,15 +118,15 @@ def _compute_data_warning(
         for r in child_rows
     ):
         return (
-            "⚠ подписан CoW/лимитный ордер — зачисление токена может быть в другой tx"
+            "⚠ подписан CoW / лимитный ордер — зачисление токена может быть в другой транзакции"
         )
     if has_out and not has_in:
-        suffix = " (receipt logs проверены)" if receipt_fetched else " — см. Etherscan / обновите кэш"
-        return f"⚠ есть Out без In — операция выглядит незавершённой{suffix}"
+        suffix = " (логи исполнения проверены)" if receipt_fetched else " — проверьте Etherscan или обновите кэш"
+        return f"⚠ зафиксирован Out без In — операция выглядит незавершённой{suffix}"
     if has_out and has_in and legs_summary and "→" in legs_summary:
         return "✓ движение согласовано (Out → In)"
     if has_in and not has_out and len(child_rows) == 1:
-        return "✓ одна входящая нога"
+        return "✓ одна входящая строка"
     return ""
 
 

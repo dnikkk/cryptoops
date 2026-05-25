@@ -17,7 +17,7 @@ from lib.styles import apply_theme, hero
 st.set_page_config(page_title="ДДС", page_icon="◇", layout="wide")
 apply_theme()
 
-hero("ДДС", "Движение денежных средств · Sepolia · плоская таблица (parent / child)")
+hero("ДДС", "Движение денежных средств · Sepolia · таблица операций в формате parent / child")
 
 wallet = render_wallet_sidebar_tree()
 
@@ -33,12 +33,12 @@ if focus_txs:
     if len(focus_txs) == 1:
         only = next(iter(focus_txs))
         st.info(
-            f"Фокус с карты графов: tx `{only[:10]}…{only[-6:]}` — "
+            f"Выбрано на карте графов: tx `{only[:10]}…{only[-6:]}` — "
             "в таблице только эта операция."
         )
     else:
         st.info(
-            f"Фокус с карты графов: **{len(focus_txs)} tx** на выбранном ребре — "
+            f"Выбрано на карте графов: **{len(focus_txs)} tx** по выбранной связи — "
             "в таблице только эти операции."
         )
 
@@ -66,15 +66,15 @@ if focus_txs:
     narrowed = df[df["tx_hash"].str.lower().isin(focus_txs)]
     if narrowed.empty:
         st.warning(
-            "Tx с ребра не найдены в ДДС для этого кошелька/периода — "
+            "Транзакции выбранной связи не найдены в ДДС для этого кошелька или периода — "
             "смените адрес, расширьте даты или обновите кэш Etherscan."
         )
     else:
         found = narrowed["tx_hash"].str.lower().nunique()
         if found < len(focus_txs):
             st.caption(
-                f"В ДДС найдено **{found}** из **{len(focus_txs)}** tx с ребра "
-                "(остальные могут быть вне периода или другого кошелька)."
+                f"В ДДС найдено **{found}** из **{len(focus_txs)}** tx по выбранной связи "
+                "(остальные могут относиться к другому периоду или кошельку)."
             )
         df = narrowed
 if is_safe(wallet):
@@ -92,7 +92,8 @@ st.caption(
 if is_safe(wallet) and df.empty:
     st.warning(
         "Нет операций за период. Попробуйте расширить даты или включить "
-        "«Обновить кэш Etherscan». Для личных tx подписанта выберите Rabby-A/B под Safe."
+        "«Обновить кэш Etherscan». Для просмотра личных транзакций подписанта "
+        "выберите соответствующий адрес Rabby под Safe."
     )
 
 render_dds_export(df)

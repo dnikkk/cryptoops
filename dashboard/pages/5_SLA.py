@@ -27,7 +27,7 @@ wallet = render_wallet_sidebar_tree()
 
 st.markdown("### SLA видимости в ДДС")
 st.caption(
-    "Время от подтверждения tx в Sepolia до появления в таблице ДДС: "
+    "Время от подтверждения транзакции в Sepolia до появления в таблице ДДС: "
     "индексация Etherscan + локальный кэш + (опционально) «Обновить кэш»."
 )
 
@@ -60,14 +60,61 @@ sla_df = sla_df.rename(
 st.dataframe(sla_df, width="stretch", hide_index=True)
 
 st.info(
-    "После новой on-chain операции подождите SLA по типу или включите "
-    "«Обновить кэш Etherscan» в sidebar."
+    "После новой on-chain операции дождитесь целевого SLA по типу операции "
+    "или включите «Обновить кэш Etherscan» в боковой панели."
 )
 
-with st.expander("Own airdrop / claim sandbox (учебный Merkle-дроп)"):
+with st.expander("Заметки для ППП (политики, процедуры, процессы)"):
     st.markdown(
         """
-Краткий путь своего дропа на Sepolia — `cryptoops/README.md`, `campaigns/`.
+**1. Финальный подписант Safe**
+
+- Единый финальный подписант упрощает навигацию при чтении ДДС.
+
+**2. Суть `parent` / `child`**
+
+- `parent` — основная транзакция.
+- `child` — отдельный leg внутри транзакции.
+
+**3. Указатель `[...]` в колонке `notes`**
+
+- `[claim]` — claim
+- `[swap]` — swap
+- `[lp]` — LP
+- `[lp-add]` — add liquidity
+- `[lp-remove]` — remove liquidity
+- `[deposit]` — deposit / supply
+- `[withdraw]` — withdraw
+- `[borrow]` — borrow
+- `[repay]` — repay
+- `[transfer]` — transfer
+- `[internal]` — internal tx
+- `[approve]` — approve
+- `[bridge]` — bridge
+- `[deploy]` — deploy
+- `[safe-create]` — Safe creation
+- `[safe-exec]` — Safe execution
+- `[gas]` — gas
+- `[other]` — other
+
+**4. Колонка `data_warning`**
+
+- `✗` — on-chain success без движения средств; операция трактуется как reject / no-op.
+- `⚠` — по данным Etherscan операция прочитана не полностью или требует дополнительной проверки.
+- `✓` — входящие и исходящие строки согласованы; операция прочитана корректно.
+
+**5. Временные метрики и эскалация**
+
+- Для каждой операции может рассчитываться среднее время исполнения.
+- При превышении допустимого интервала операция подлежит эскалации.
+- Счётчик `past time from tx` используется для контроля фактического времени с момента транзакции.
+"""
+    )
+
+with st.expander("Собственный airdrop / claim: учебный сценарий Merkle"):
+    st.markdown(
+        """
+Краткая схема собственного airdrop на Sepolia — `cryptoops/README.md`, `campaigns/`.
 
 1. Whitelist (CSV) → snapshot адресов и сумм  
 2. Merkle tree → `merkleRoot` + `proof.json` на каждый адрес  
@@ -77,7 +124,7 @@ with st.expander("Own airdrop / claim sandbox (учебный Merkle-дроп)")
 6. **Claim** on-chain (`claim(proof)`)  
 7. Сверка: Etherscan + вкладка **Claim** в ДДС  
 
-**Execution (claim)** — чеклист при тесте песочницы:
+**Проверки для claim**
 
 - `hasClaimed(address) = false`  
 - proof из `proof.json` для адреса  
@@ -85,7 +132,7 @@ with st.expander("Own airdrop / claim sandbox (учебный Merkle-дроп)")
 - tx success + Transfer event  
 - баланс получателя += amount  
 
-**Post-flight** — после claim:
+**Контроль после claim**
 
 - строка Claim в ДДС (SLA или обновление кэша)  
 - остаток на MerkleClaim ≈ 0  

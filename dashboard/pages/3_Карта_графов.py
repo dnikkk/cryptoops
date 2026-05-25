@@ -48,7 +48,7 @@ def _label_for_addr(addr: str, labels: dict[str, str]) -> str:
 
 hero(
     "Карта графов",
-    "Связи выбранного кошелька: ваши 8 адресов + внешние контрагенты (on-chain)",
+    "Связи выбранного кошелька: 8 адресов реестра и внешние контрагенты (on-chain)",
 )
 
 wallet = render_wallet_sidebar_tree()
@@ -113,8 +113,8 @@ st.markdown(
 )
 st.caption(
     "Синий Safe · зелёный EOA · серый внешний · "
-    "зелёное ребро — между своими · оранжевое — контрагент · "
-    "голубое — execTransaction · масштаб зафиксирован по ширине"
+    "зелёное ребро — между адресами реестра · оранжевое — внешний контрагент · "
+    "голубое — execTransaction · масштаб — кнопками или вертикальным скролом · перетаскивание включено"
 )
 
 clicked_edge = render_flow_graph(
@@ -139,15 +139,18 @@ st.markdown("---")
 st.subheader("Перейти в ДДС по связи")
 
 if not edge_options:
-    st.warning("Нет on-chain рёбер с tx.")
+    st.warning("Нет on-chain связей с транзакциями.")
     st.stop()
 
 if not pick_edge:
-    st.info("Кликните **ребро** на графе — здесь появятся детали и переход в ДДС.")
+    st.info("Выберите **ребро** на графе — ниже появятся детали и переход в ДДС.")
     st.stop()
 
 if pick_edge not in edge_options:
-    st.warning("У выбранной связи нет on-chain tx (например signer). Выберите другое ребро.")
+    st.warning(
+        "У выбранной связи нет on-chain транзакций "
+        "(например, для связи signer → Safe). Выберите другое ребро."
+    )
     st.stop()
 
 picked = edge_options[pick_edge]
@@ -161,7 +164,7 @@ focus_wallet = _wallet_for_dds(picked, wallet)
 legs = list(picked.legs)
 n_legs = len(legs)
 
-st.markdown(f"**Транзакции на ребре ({n_legs})**")
+st.markdown(f"**Транзакции по связи ({n_legs})**")
 
 def _go_dds(*, tx_hashes: list[str]) -> None:
     st.session_state.wallet_address = focus_wallet
@@ -181,7 +184,7 @@ def _go_dds(*, tx_hashes: list[str]) -> None:
 col_all, col_reset = st.columns([3, 1])
 with col_all:
     if st.button(
-        f"Открыть все {n_legs} tx в ДДС",
+        "Открыть все транзакции связи в ДДС",
         type="primary",
         disabled=n_legs == 0,
     ):

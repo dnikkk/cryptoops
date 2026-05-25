@@ -64,10 +64,10 @@ def _render_dds_table(df: pd.DataFrame, *, empty_hint: str | None, grid_key: str
     rejected = parents[warn_col.str.startswith("✗", na=False)]
     st.caption(
         f"{len(parents)} операций (parent) · {len(df)} строк всего · "
-        f"child legs: {len(df) - len(parents)}"
-        + (f" · ⚠ внимание: {len(warnings)}" if len(warnings) else "")
-        + (f" · ✓ ok: {len(ok_marked)}" if len(ok_marked) else "")
-        + (f" · ✗ reject: {len(rejected)}" if len(rejected) else "")
+        f"детализирующих строк: {len(df) - len(parents)}"
+        + (f" · ⚠ требуют проверки: {len(warnings)}" if len(warnings) else "")
+        + (f" · ✓ согласовано: {len(ok_marked)}" if len(ok_marked) else "")
+        + (f" · ✗ без движения: {len(rejected)}" if len(rejected) else "")
     )
 
     c1, c2, c3, c4, c5, c6 = st.columns(6)

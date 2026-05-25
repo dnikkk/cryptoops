@@ -29,7 +29,7 @@ DDS_VISIBILITY_TARGETS: list[dict[str, Any]] = [
     {
         "category": "LP",
         "target_minutes": 45,
-        "note": "NFT positions, больше legs",
+        "note": "NFT positions, несколько legs",
     },
     {
         "category": "Transfer",
@@ -39,7 +39,7 @@ DDS_VISIBILITY_TARGETS: list[dict[str, Any]] = [
     {
         "category": "Safe reject",
         "target_minutes": 10,
-        "note": "no-op execTransaction (пустой calldata)",
+        "note": "execTransaction без движения средств (пустой calldata)",
     },
 ]
 

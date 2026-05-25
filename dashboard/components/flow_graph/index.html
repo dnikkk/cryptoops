@@ -14,16 +14,67 @@
       overflow: hidden;
       font-family: "DM Sans", "Segoe UI", Arial, sans-serif;
     }
+    #wrap {
+      position: relative;
+      width: 100%;
+    }
     #network {
       width: 100%;
       border: 1px solid rgba(99, 179, 237, 0.18);
       border-radius: 12px;
       box-sizing: border-box;
+      touch-action: pan-x pan-y;
+    }
+    #zoom-controls {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(13, 21, 38, 0.88);
+      border: 1px solid rgba(99, 179, 237, 0.18);
+      backdrop-filter: blur(4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+    }
+    .zoom-btn,
+    .zoom-readout {
+      height: 34px;
+      border-radius: 9px;
+      border: 1px solid rgba(126, 200, 255, 0.28);
+      background: #162238;
+      color: #eef3fb;
+      font: 600 15px/1 "DM Sans", "Segoe UI", Arial, sans-serif;
+    }
+    .zoom-btn {
+      min-width: 34px;
+      cursor: pointer;
+    }
+    .zoom-btn:hover {
+      background: #20304c;
+    }
+    .zoom-btn:active {
+      background: #294061;
+    }
+    .zoom-readout {
+      min-width: 58px;
+      padding: 0 10px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div id="network"></div>
+  <div id="wrap">
+    <div id="zoom-controls">
+      <button id="zoom-out" class="zoom-btn" type="button" aria-label="Уменьшить масштаб">−</button>
+      <button id="zoom-reset" class="zoom-readout" type="button" aria-label="Сбросить масштаб">100%</button>
+      <button id="zoom-in" class="zoom-btn" type="button" aria-label="Увеличить масштаб">+</button>
+    </div>
+    <div id="network"></div>
+  </div>
   <script>
     /* Minimal Streamlit component bridge (no external lib). */
     const Streamlit = {
@@ -90,6 +141,10 @@
 
     let network = null;
     let fixedScale = null;
+    let currentScale = null;
+    let minScale = null;
+    let maxScale = null;
+    let viewCenter = { x: 0, y: 0 };
 
     function edgeStyle(kind, selected) {
       if (selected) return { color: COLORS.edge.selected, width: 4, dashes: false };
@@ -116,13 +171,43 @@
       return y < anchorY - 20 ? -44 : 44;
     }
 
+    function stopEventBubble(el) {
+      ["mousedown", "mouseup", "mousemove", "click", "dblclick", "wheel", "touchstart", "touchmove", "touchend"]
+        .forEach((evt) => {
+          el.addEventListener(evt, (e) => e.stopPropagation(), { passive: false });
+        });
+    }
+
+    function updateZoomUi() {
+      const reset = document.getElementById("zoom-reset");
+      if (!reset || !fixedScale || !currentScale) return;
+      const pct = Math.round((currentScale / fixedScale) * 100);
+      reset.textContent = pct + "%";
+    }
+
+    function applyScale(nextScale, opts = {}) {
+      if (!network || nextScale == null || currentScale == null) return;
+      const clamped = Math.min(maxScale, Math.max(minScale, nextScale));
+      if (Math.abs(clamped - currentScale) < 0.001 && !opts.force) return;
+      currentScale = clamped;
+      const position = opts.position || network.getViewPosition() || viewCenter;
+      network.moveTo({
+        scale: currentScale,
+        position,
+        animation: false,
+      });
+      updateZoomUi();
+    }
+
     function buildNetwork(args) {
       const container = document.getElementById("network");
+      const zoomInBtn = document.getElementById("zoom-in");
+      const zoomOutBtn = document.getElementById("zoom-out");
+      const zoomResetBtn = document.getElementById("zoom-reset");
       const height = args.height || 920;
       container.style.height = height + "px";
-      container.onwheel = function (e) {
-        e.preventDefault();
-      };
+      container.onwheel = null;
+      stopEventBubble(document.getElementById("zoom-controls"));
 
       const anchorY = args.anchorY || 0;
       const visNodes = new vis.DataSet(
@@ -185,24 +270,79 @@
       if (network) network.destroy();
       network = new vis.Network(container, { nodes: visNodes, edges: visEdges }, options);
 
-      network.once("afterDrawing", function () {
+      function applyInitialView() {
+        if (!network) return;
         const ids = visNodes.getIds();
         if (!ids.length) return;
         network.fit({ nodes: ids, animation: false });
-        const bb = network.getBoundingBox(ids);
+        let bb = null;
+        ids.forEach((id) => {
+          const cur = network.getBoundingBox(id);
+          if (!cur) return;
+          if (!bb) {
+            bb = { left: cur.left, right: cur.right, top: cur.top, bottom: cur.bottom };
+            return;
+          }
+          bb.left = Math.min(bb.left, cur.left);
+          bb.right = Math.max(bb.right, cur.right);
+          bb.top = Math.min(bb.top, cur.top);
+          bb.bottom = Math.max(bb.bottom, cur.bottom);
+        });
+        if (!bb) return;
         const cw = container.clientWidth || 800;
         const gw = Math.max(bb.right - bb.left, 1);
         fixedScale = Math.min((cw * 0.88) / gw, 1.55);
+        minScale = Math.max(fixedScale * 0.78, 0.28);
+        maxScale = Math.max(fixedScale * 2.1, fixedScale + 0.7);
+        currentScale = fixedScale;
         const cx = (bb.left + bb.right) / 2;
         const cy = (bb.top + bb.bottom) / 2;
-        network.moveTo({ scale: fixedScale, position: { x: cx, y: cy }, animation: false });
-      });
+        viewCenter = { x: cx, y: cy };
+        network.moveTo({ scale: currentScale, position: viewCenter, animation: false });
+        updateZoomUi();
+      }
+
+      applyInitialView();
+      requestAnimationFrame(applyInitialView);
+      setTimeout(applyInitialView, 120);
 
       network.on("zoom", function (p) {
-        if (fixedScale && Math.abs(p.scale - fixedScale) > 0.001) {
-          network.moveTo({ scale: fixedScale, animation: false });
+        if (!network || currentScale == null) return;
+        if (Math.abs(p.scale - currentScale) > 0.001) {
+          network.moveTo({ scale: currentScale, position: network.getViewPosition(), animation: false });
         }
       });
+
+      network.on("dragEnd", function () {
+        if (!network) return;
+        viewCenter = network.getViewPosition() || viewCenter;
+      });
+
+      container.onwheel = function (e) {
+        if (!network || currentScale == null) return;
+        if (e.ctrlKey) {
+          e.preventDefault();
+          return;
+        }
+        e.preventDefault();
+        const factor = Math.exp(-e.deltaY * 0.0012);
+        applyScale(currentScale * factor, { position: network.getViewPosition() });
+      };
+
+      zoomInBtn.onclick = function () {
+        if (!currentScale) return;
+        applyScale(currentScale * 1.15, { position: network.getViewPosition() });
+      };
+
+      zoomOutBtn.onclick = function () {
+        if (!currentScale) return;
+        applyScale(currentScale / 1.15, { position: network.getViewPosition() });
+      };
+
+      zoomResetBtn.onclick = function () {
+        if (!fixedScale) return;
+        applyScale(fixedScale, { position: viewCenter, force: true });
+      };
 
       network.on("click", function (params) {
         if (params.edges && params.edges.length > 0) {
@@ -215,7 +355,7 @@
         network.selectEdges([sel]);
         const edge = visEdges.get(sel);
         if (edge && edge.from) {
-          network.focus(edge.from, { scale: fixedScale || 1, animation: false });
+          network.focus(edge.from, { scale: currentScale || fixedScale || 1, animation: false });
         }
       }
 
