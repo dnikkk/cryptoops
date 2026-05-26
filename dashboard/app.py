@@ -82,21 +82,21 @@ st.markdown(
 """
 )
 
-# st.markdown("### Документация")
-# st.markdown(f"Репозиторий: [{GITHUB_REPO}]({GITHUB_REPO})")
+st.markdown("### Документация")
+st.markdown(f"Репозиторий: [{GITHUB_REPO}]({GITHUB_REPO})")
 
-# docs = [
-#     ("Playbook (README)", github_doc("README.md")),
-#     ("Runbook (кампании 001–004)", github_doc("RUNBOOK.md")),
-#     ("Кампании", github_doc("campaigns/README.md")),
-#     ("Дашборд", github_doc("dashboard/README.md")),
-#     ("Foundry setup", github_doc("FOUNDRY.md")),
-#     ("Спецификация ДДС", github_doc(".cursor/prompts/streamlit-dds-dashboard.md")),
-# ]
-# cols = st.columns(2)
-# for i, (title, url) in enumerate(docs):
-#     with cols[i % 2]:
-#         st.link_button(title, url, width="stretch")
+docs = [
+    ("Playbook (README)", github_doc("README.md")),
+    ("Runbook (кампании 001–004)", github_doc("RUNBOOK.md")),
+    ("Кампании", github_doc("campaigns/README.md")),
+    ("Дашборд", github_doc("dashboard/README.md")),
+    ("Foundry setup", github_doc("FOUNDRY.md")),
+    ("Спецификация ДДС", github_doc(".cursor/prompts/streamlit-dds-dashboard.md")),
+]
+cols = st.columns(2)
+for i, (title, url) in enumerate(docs):
+    with cols[i % 2]:
+        st.link_button(title, url, width="stretch")
 
 with st.expander("Реестр Safe (кратко)"):
     st.markdown(
